@@ -1,0 +1,88 @@
+import random
+import time
+import os
+
+# Estrutura do Labirinto (Exemplo baseado no Colab)
+# 0: Caminho, 1: Parede, 'E': Entrada, 'S': Saída
+labirinto = [
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 'E', 0, 0, 1, 0, 0, 0, 0, 1],
+    [1, 1, 1, 0, 1, 0, 1, 1, 0, 1],
+    [1, 0, 0, 0, 0, 0, 1, 0, 0, 1],
+    [1, 0, 1, 1, 1, 0, 1, 1, 1, 1],
+    [1, 0, 0, 0, 1, 0, 0, 0, 'S', 1],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+]
+
+def exibir_labirinto(matriz, pos_agente):
+    for i in range(len(matriz)):
+        linha_str = ""
+        for j in range(len(matriz[i])):
+            if (i, j) == pos_agente:
+                linha_str += " R "  # Robô
+            elif matriz[i][j] == 1:
+                linha_str += " █ "  # Parede
+            else:
+                linha_str += f" {matriz[i][j]} "
+        print(linha_str)
+    print("-" * 30)
+
+def simular_agente_com_memoria():
+    # 1. Localizar Posição Inicial (E)
+    pos_atual = None
+    for i in range(len(labirinto)):
+        for j in range(len(labirinto[i])):
+            if labirinto[i][j] == 'E':
+                pos_atual = (i, j)
+    
+    # 2. Estado Interno (Memória)
+    visitados = set()
+    visitados.add(pos_atual)
+    
+    caminho_percorrido = [pos_atual] # Pilha para permitir "backtracking" se travar
+    
+    print("Agente iniciando a navegação...")
+    
+    passos = 0
+    while passos < 500:
+        exibir_labirinto(labirinto, pos_atual)
+        
+        # Percepção: Chegou na saída?
+        if labirinto[pos_atual[0]][pos_atual[1]] == 'S':
+            print(f"SUCESSO! O agente encontrou a saída em {passos} passos.")
+            break
+            
+        # Regras de Movimentação (Cima, Baixo, Esquerda, Direita)
+        movimentos = [(-1, 0), (1, 0), (0, -1), (0, 1)]
+        possibilidades = []
+        
+        for m in movimentos:
+            nova_pos = (pos_atual[0] + m[0], pos_atual[1] + m[1])
+            
+            # Checa limites e se não é parede
+            if (0 <= nova_pos[0] < len(labirinto) and 
+                0 <= nova_pos[1] < len(labirinto[0]) and 
+                labirinto[nova_pos[0]][nova_pos[1]] != 1):
+                
+                # Regra do Estado Interno: Prioriza lugares não visitados
+                if nova_pos not in visitados:
+                    possibilidades.append(nova_pos)
+
+        if possibilidades:
+            # Move para uma nova posição e marca como visitada
+            pos_atual = random.choice(possibilidades)
+            visitados.add(pos_atual)
+            caminho_percorrido.append(pos_atual)
+        else:
+            # Se não há caminhos novos, o agente usa a memória para voltar um passo (Backtracking)
+            if len(caminho_percorrido) > 1:
+                caminho_percorrido.pop()
+                pos_atual = caminho_percorrido[-1]
+            else:
+                print("Agente preso: não há saída possível.")
+                break
+        
+        passos += 1
+        time.sleep(0.3) # Pausa para visualização
+
+simular_agente_com_memoria()
